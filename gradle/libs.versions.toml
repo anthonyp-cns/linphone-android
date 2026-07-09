@@ -67,6 +67,7 @@ coil-svg = { group = "io.coil-kt.coil3", name = "coil-svg", version.ref = "coil"
 coil-video = { group = "io.coil-kt.coil3", name = "coil-video", version.ref = "coil" }
 dots-indicator = { group = "com.tbuonomo", name = "dotsindicator", version.ref = "dotsIndicator" }
 photoview = { group = "com.github.chrisbanes", name = "PhotoView", version.ref = "photoview" }
+#noinspection LoginCredentials
 openid-appauth = { group = "net.openid", name = "appauth", version.ref = "openidAppauth" }
 
 linphone = { group = "org.linphone", name = "linphone-sdk-android", version.ref = "linphone" }

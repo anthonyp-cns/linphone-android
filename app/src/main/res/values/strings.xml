@@ -20,6 +20,7 @@
     <string name="notification_channel_chat_id" translatable="false">linphone_6.0_notification_chat_id</string>
     <string name="notification_channel_without_ringtone_incoming_call_id" translatable="false">linphone_6.0.1_notification_incoming_call_id</string>
     <string name="notification_channel_account_error_id" translatable="false">linphone_6.1_account_error_id</string>
+    <string name="notification_channel_call_redirection_id" translatable="false">linphone_6.2_call_redirection_id</string>
 
     <string name="emoji_love" translatable="false">❤️</string>
     <string name="emoji_thumbs_up" translatable="false">👍</string>
@@ -93,6 +94,7 @@
     <string name="notification_channel_service_desc">This service will run all the time to keep app alive and allow you to receive calls and messages without push notifications.</string>
     <string name="notification_channel_chat_name">Instant messages notifications</string>
     <string name="notification_channel_account_error_name">Account error notifications</string>
+    <string name="notification_channel_call_redirection_name">Call redirection notifications</string>
     <string name="notification_chat_message_reaction_received">Reacted by %1$s to: %2$s</string>
     <string name="notification_mark_message_as_read">Mark as read</string>
     <string name="notification_reply_to_message">Reply</string>
@@ -122,6 +124,9 @@
     <string name="notification_in_call_foreground_service_error_title">Your correspondent does not hear you!</string>
     <string name="notification_in_call_foreground_service_error_message">Click on this notification to fix it</string>
     <string name="notification_chat_message_hidden_content">&lt;redacted&gt;</string>
+    <string name="notification_call_redirection_message">The call will be redirected through &appName; in 4 seconds unless you say otherwise.</string>
+    <string name="notification_allow_call_redirection_title">Continue</string>
+    <string name="notification_deny_call_redirection_title">Cancel redirection</string>
 
     <!-- First screens user see when app is installed and started -->
     <string name="welcome_page_title">Welcome</string>

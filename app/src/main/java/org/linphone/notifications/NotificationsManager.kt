@@ -93,10 +93,13 @@ class NotificationsManager
         const val INTENT_REPLY_MESSAGE_NOTIF_ACTION = "org.linphone.REPLY_ACTION"
         const val INTENT_MARK_MESSAGE_AS_READ_NOTIF_ACTION = "org.linphone.MARK_AS_READ_ACTION"
         const val INTENT_FOREGROUND_SERVICE_NOTIF_DISMISSED_ACTION = "org.linphone.INTENT_FOREGROUND_SERVICE_NOTIF_DISMISSED_ACTION"
+        const val INTENT_ALLOW_CALL_REDIRECTION_ACTION = "org.linphone.INTENT_ALLOW_CALL_REDIRECTION_ACTION"
+        const val INTENT_DENY_CALL_REDIRECTION_ACTION = "org.linphone.INTENT_DENY_CALL_REDIRECTION_ACTION"
 
         const val INTENT_ANSWER_CALL_NOTIF_CODE = 2
         const val INTENT_HANGUP_CALL_NOTIF_CODE = 3
         const val INTENT_TOGGLE_SPEAKER_CALL_NOTIF_CODE = 4
+        const val INTENT_CALL_REDIRECTION_NOTIF_CODE = 5
 
         const val INTENT_NOTIF_ID = "NOTIFICATION_ID"
 
@@ -105,9 +108,9 @@ class NotificationsManager
         const val INTENT_REMOTE_SIP_URI = "REMOTE_ADDRESS"
 
         const val CHAT_TAG = "Chat"
-
         private const val ACCOUNT_ERROR_TAG = "Account Error"
         private const val IN_CALL_ERROR_TAG = "Call Error"
+        private const val CALL_REDIRECTION_TAG = "Call Redirection"
 
         private const val MISSED_CALL_TAG = "Missed call"
         private const val CHAT_NOTIFICATIONS_GROUP = "CHAT_NOTIF_GROUP"
@@ -117,6 +120,7 @@ class NotificationsManager
         private const val ACCOUNT_REGISTRATION_ERROR_ID = 7
         private const val IN_CALL_FOREGROUND_SERVICE_ERROR_ID = 8
         private const val MISSED_CALL_ID = 10
+        private const val CALL_REDIRECTION_ID = 20
     }
 
     private var currentInCallServiceNotificationId = -1
@@ -645,6 +649,7 @@ class NotificationsManager
         createActiveCallNotificationChannel()
         createMessageChannel()
         createAccountErrorNotificationChannel()
+        createCallRedirectionUserChoiceNotificationChannel()
     }
 
     @WorkerThread
@@ -1318,7 +1323,7 @@ class NotificationsManager
     }
 
     @SuppressLint("MissingPermission")
-    @WorkerThread
+    @AnyThread
     private fun notify(id: Int, notification: Notification, tag: String? = null) {
         if (Compatibility.isPostNotificationsPermissionGranted(context)) {
             Log.i(
@@ -1344,7 +1349,7 @@ class NotificationsManager
         }
     }
 
-    @WorkerThread
+    @AnyThread
     fun cancelNotification(id: Int, tag: String? = null) {
         Log.i(
             "$TAG Canceling notification with ID [$id] and ${if (tag == null) "without tag" else "with tag [$tag]"}"
@@ -2048,6 +2053,21 @@ class NotificationsManager
         notificationManager.createNotificationChannel(channel)
     }
 
+    @MainThread
+    private fun createCallRedirectionUserChoiceNotificationChannel() {
+        val id = context.getString(R.string.notification_channel_call_redirection_id)
+        val name = context.getString(R.string.notification_channel_call_redirection_name)
+
+        val channel = NotificationChannel(id, name, NotificationManager.IMPORTANCE_HIGH).apply {
+            description = name
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            enableLights(true)
+            enableVibration(true)
+            setShowBadge(true)
+        }
+        notificationManager.createNotificationChannel(channel)
+    }
+
     @WorkerThread
     private fun getChatRoomPendingIntent(chatRoom: ChatRoom, notificationId: Int): PendingIntent {
         val args = Bundle()
@@ -2120,6 +2140,78 @@ class NotificationsManager
         } else {
             Log.i("$TAG Edited/retracted message isn't in currently displayed notification, nothing to update")
         }
+    }
+
+    @AnyThread
+    fun showPendingCallRedirectionNotification() {
+        val allowCallRedirectIntent = getAllowCallRedirectionPendingIntent()
+        val denyCallRedirectIntent = getDenyCallRedirectionPendingIntent()
+
+        val builder = NotificationCompat.Builder(
+            context,
+            context.getString(R.string.notification_channel_call_redirection_id)
+        ).apply {
+            setContentText(context.getString(R.string.notification_call_redirection_message))
+            setColor(context.resources.getColor(R.color.gray_600, context.theme))
+            setColorized(true)
+            setOnlyAlertOnce(true)
+            setSmallIcon(R.drawable.linphone_notification)
+            setCategory(NotificationCompat.CATEGORY_CALL)
+            setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            setPriority(NotificationCompat.PRIORITY_HIGH)
+            setAutoCancel(false)
+            setOngoing(true)
+            setChronometerCountDown(true)
+            setUsesChronometer(true)
+            setWhen(System.currentTimeMillis() + 5000) // Use 5000 so countdown starts at 00:04
+            setShowWhen(true)
+        }
+        builder.addAction(
+            NotificationCompat.Action.Builder(R.drawable.check, context.getString(R.string.notification_deny_call_redirection_title), denyCallRedirectIntent).build()
+        )
+        builder.addAction(
+            NotificationCompat.Action.Builder(R.drawable.x, context.getString(R.string.notification_allow_call_redirection_title), allowCallRedirectIntent).build()
+        )
+
+        val notification = builder.build()
+        notify(CALL_REDIRECTION_ID, notification, CALL_REDIRECTION_TAG)
+        Log.i("$TAG Showing user choice regarding call redirection notification")
+    }
+
+    @AnyThread
+    fun cancelCallRedirectionNotification() {
+        Log.i("$TAG Cancelling user choice regarding call redirection notification")
+        cancelNotification(CALL_REDIRECTION_ID, CALL_REDIRECTION_TAG)
+    }
+
+    @AnyThread
+    fun getAllowCallRedirectionPendingIntent(): PendingIntent {
+        val answerIntent = Intent(context, NotificationBroadcastReceiver::class.java)
+        answerIntent.apply {
+            action = INTENT_ALLOW_CALL_REDIRECTION_ACTION
+        }
+
+        return PendingIntent.getBroadcast(
+            context,
+            INTENT_CALL_REDIRECTION_NOTIF_CODE,
+            answerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    @AnyThread
+    fun getDenyCallRedirectionPendingIntent(): PendingIntent {
+        val answerIntent = Intent(context, NotificationBroadcastReceiver::class.java)
+        answerIntent.apply {
+            action = INTENT_DENY_CALL_REDIRECTION_ACTION
+        }
+
+        return PendingIntent.getBroadcast(
+            context,
+            INTENT_CALL_REDIRECTION_NOTIF_CODE,
+            answerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     @AnyThread

@@ -38,6 +38,11 @@ class TelecomConnectionService : ConnectionService() {
         val uri = request.address
         Log.i("$TAG Received request with URI [$uri]")
 
+        if (uri.toString().startsWith("tel:")) {
+            Log.w("$TAG Uri is using tel: scheme, aborting Linphone call")
+            return Connection.createCanceledConnection()
+        }
+
         if (coreContext.core.callsNb == 0) {
             val address = coreContext.core.interpretUrl(uri.toString(), true)
             if (address != null) {

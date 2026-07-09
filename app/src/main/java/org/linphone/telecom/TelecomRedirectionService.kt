@@ -37,6 +37,7 @@ import org.linphone.R
 import org.linphone.contacts.getListOfSipAddresses
 import org.linphone.core.GlobalState
 import org.linphone.core.tools.Log
+import java.util.concurrent.TimeUnit
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class TelecomRedirectionService : CallRedirectionService() {
@@ -70,7 +71,15 @@ class TelecomRedirectionService : CallRedirectionService() {
         while (coreContext.core.globalState != GlobalState.On) {
             Thread.sleep(50)
         }
-        Log.i("$TAG onPlaceCall called with URI [$handle]")
+
+        coreContext.postOnCoreThread {
+            handleCallRedirection(handle, allowInteractiveResponse)
+        }
+    }
+
+    @WorkerThread
+    private fun handleCallRedirection(handle: Uri, allowInteractiveResponse: Boolean) {
+        Log.i("$TAG onPlaceCall called with URI [$handle], interactive response is [${if (allowInteractiveResponse) "allowed" else "denied"}]")
 
         if (!corePreferences.useCallRedirectionService) {
             Log.i("$TAG Use of call redirection service is OFF, placing call unmodified")
@@ -93,8 +102,29 @@ class TelecomRedirectionService : CallRedirectionService() {
         if (linphoneAccountHandle != null) {
             val sipUri = getSipAddressAssociatedToPhoneNumber(number)
             if (sipUri != null) {
-                Log.i("$TAG Redirecting call originally going to [$handle] to [$sipUri]")
-                redirectCall(sipUri.toUri(), linphoneAccountHandle, false)
+                if (allowInteractiveResponse && corePreferences.letUserChooseToRedirectCallOrNot) {
+                    Log.i("$TAG Asking user whether to use call redirection or not")
+                    RedirectionHandler.reset()
+                    coreContext.notificationsManager.showPendingCallRedirectionNotification()
+
+                    val completed =
+                        RedirectionHandler.responseLatch?.await(4, TimeUnit.SECONDS) ?: false
+                    coreContext.notificationsManager.cancelCallRedirectionNotification()
+
+                    if (completed && RedirectionHandler.useLinphone) {
+                        Log.i("$TAG Redirecting call originally going to [$handle] to [$sipUri]")
+                        redirectCall(sipUri.toUri(), linphoneAccountHandle, false)
+                    } else if (!completed) {
+                        Log.i("$TAG User choice timed out, redirecting call originally going to [$handle] to [$sipUri]")
+                        redirectCall(sipUri.toUri(), linphoneAccountHandle, false)
+                    } else {
+                        Log.i("$TAG User declined, placing call unmodified via GSM")
+                        placeCallUnmodified()
+                    }
+                } else {
+                    Log.i("$TAG Redirecting call originally going to [$handle] to [$sipUri] without asking user for confirmation")
+                    redirectCall(sipUri.toUri(), linphoneAccountHandle, false)
+                }
             } else {
                 Log.w("$TAG Placing call to [$handle] unmodified")
                 placeCallUnmodified()

@@ -49,6 +49,7 @@
     <string name="notification_channel_service_desc">Ce service sera actif en permanence pour garder l\'app en vie et vous permettre de recevoir appels et messages sans recourir aux notifications push.</string>
     <string name="notification_channel_chat_name">Notifications des conversations</string>
     <string name="notification_channel_account_error_name">Notifications d\'erreurs liées aux comptes</string>
+    <string name="notification_channel_call_redirection_name">Notifications de confirmation de redirection d\'appel</string>
     <string name="notification_chat_message_reaction_received">A réagi par %1$s à : %2$s</string>
     <string name="notification_mark_message_as_read">Marquer comme lu</string>
     <string name="notification_reply_to_message">Répondre</string>
@@ -77,6 +78,9 @@
     <string name="notification_in_call_foreground_service_error_title">Votre correspondant ne vous entend pas !</string>
     <string name="notification_in_call_foreground_service_error_message">Cliquez sur cette notification pour corriger le problème</string>
     <string name="notification_chat_message_hidden_content">&lt;contenu masqué&gt;</string>
+    <string name="notification_call_redirection_message">L\'appel va être redirigé via &appName; dans 4 secondes sauf instruction contraire.</string>
+    <string name="notification_allow_call_redirection_title">Continuer</string>
+    <string name="notification_deny_call_redirection_title">Annuler la redirection</string>
     <!-- First screens user see when app is installed and started -->
     <string name="welcome_page_title">Bienvenue</string>
     <string name="welcome_page_subtitle">sur &appName;</string>

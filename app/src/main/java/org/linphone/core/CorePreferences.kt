@@ -131,6 +131,13 @@ class CorePreferences
             config.setBool("app", "call_redirection_service", value)
         }
 
+    @get:AnyThread @set:WorkerThread
+    var letUserChooseToRedirectCallOrNot: Boolean
+        get() = config.getBool("app", "call_redirection_requests_user_confirmation", true)
+        set(value) {
+            config.setBool("app", "call_redirection_requests_user_confirmation", value)
+        }
+
     // Call settings
 
     // This won't be done if bluetooth or wired headset is used
