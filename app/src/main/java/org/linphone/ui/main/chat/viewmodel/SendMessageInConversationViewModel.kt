@@ -100,6 +100,8 @@ class SendMessageInConversationViewModel
 
     val isVoiceRecording = MutableLiveData<Boolean>()
 
+    val isEndToEndEncrypted = MutableLiveData<Boolean>()
+
     val isVoiceRecordingInProgress = MutableLiveData<Boolean>()
 
     val voiceRecordingDuration = MutableLiveData<Int>()
@@ -208,8 +210,10 @@ class SendMessageInConversationViewModel
 
     @UiThread
     fun configureChatRoom(room: ChatRoom) {
+        
         Log.i("$TAG Chat room configured")
         chatRoom = room
+        isEndToEndEncrypted.postValue(room.hasCapability(ChatRoom.Capabilities.Encrypted.toInt()))
         coreContext.postOnCoreThread {
             chatRoom.addListener(chatRoomListener)
             computeParticipantsList()
