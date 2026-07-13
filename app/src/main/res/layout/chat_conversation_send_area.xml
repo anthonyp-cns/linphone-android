@@ -17,6 +17,7 @@
         <variable
             name="viewModel"
             type="org.linphone.ui.main.chat.viewmodel.SendMessageInConversationViewModel" />
+        <import type="android.view.inputmethod.EditorInfo" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -152,7 +153,7 @@
             android:layout_marginBottom="10dp"
             android:background="@color/transparent_color"
             android:hint="@string/conversation_text_field_hint"
-            android:imeOptions="flagNoPersonalizedLearning"
+            android:imeOptions="@{viewModel.isEndToEndEncrypted ? EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING : 0}"
             android:inputType="textShortMessage|textMultiLine|textAutoComplete|textAutoCorrect|textCapSentences"
             android:maxLines="3"
             android:minHeight="48dp"
